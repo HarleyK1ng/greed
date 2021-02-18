@@ -113,6 +113,10 @@ def factory(cfg: nuconfig.NuConfig):
         def send_document(self, *args, **kwargs):
             return self.bot.send_document(*args, **kwargs)
 
+        @catch_telegram_errors
+        def send_location(self, *args, **kwargs):
+            return self.bot.send_location(*args, **kwargs)
+
         # More methods can be added here
 
     return DuckBot

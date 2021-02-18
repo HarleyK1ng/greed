@@ -45,7 +45,7 @@ def main():
             user_cfg_file.write(template_cfg_file.read())
 
         log.fatal("A config file has been created in config/config.toml."
-                  " Customize it, then restart greed!")
+                  " Customize it, then restart bot!")
         exit(1)
 
     # Compare the template config with the user-made one
@@ -54,7 +54,7 @@ def main():
         template_cfg = nuconfig.NuConfig(template_cfg_file)
         user_cfg = nuconfig.NuConfig(user_cfg_file)
         if not template_cfg.cmplog(user_cfg):
-            log.fatal("There were errors while parsing the config.toml file. Please fix them and restart greed!")
+            log.fatal("There were errors while parsing the config.toml file. Please fix them and restart bot!")
             exit(2)
         else:
             log.debug("Configuration parsed successfully!")
@@ -90,7 +90,7 @@ def main():
     log.debug("Testing bot token...")
     me = bot.get_me()
     if me is None:
-        logging.fatal("The token you have entered in the config file is invalid. Fix it, then restart greed.")
+        logging.fatal("The token you have entered in the config file is invalid. Fix it, then restart bot.")
         sys.exit(1)
     log.debug("Bot token is valid!")
 

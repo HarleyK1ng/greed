@@ -3,7 +3,7 @@ import typing
 
 import requests
 import telegram
-from sqlalchemy import Column, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, UniqueConstraint, VARCHAR
 from sqlalchemy import Integer, BigInteger, String, Text, LargeBinary, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base, DeferredReflection
 from sqlalchemy.orm import relationship, backref
@@ -30,9 +30,6 @@ class User(DeferredReflection, TableDeclarativeBase):
     username = Column(String)
     language = Column(String, nullable=False)
 
-    # Current wallet credit
-    credit = Column(Integer, nullable=False)
-
     # Extra table parameters
     __tablename__ = "users"
 
@@ -48,8 +45,6 @@ class User(DeferredReflection, TableDeclarativeBase):
             self.language = w.telegram_user.language_code
         else:
             self.language = w.cfg["Language"]["default_language"]
-        # The starting wallet value is 0
-        self.credit = 0
 
     def __str__(self):
         """Describe the user in the best way possible given the available data."""
@@ -71,11 +66,6 @@ class User(DeferredReflection, TableDeclarativeBase):
         else:
             return f"[{self.first_name}](tg://user?id={self.user_id})"
 
-    def recalculate_credit(self):
-        """Recalculate the credit for this user by calculating the sum of the values of all their transactions."""
-        valid_transactions: typing.List[Transaction] = [t for t in self.transactions if not t.refunded]
-        self.credit = sum(map(lambda t: t.value, valid_transactions))
-
     @property
     def full_name(self):
         if self.last_name:
@@ -83,8 +73,44 @@ class User(DeferredReflection, TableDeclarativeBase):
         else:
             return self.first_name
 
-    def __repr__(self):
-        return f"<User {self.mention()} having {self.credit} credit>"
+
+class Category(DeferredReflection, TableDeclarativeBase):
+    """Category of product. For example: pizza, beverage, steak, etc."""
+
+    __tablename__ = "categories"
+
+    # Category id
+    id = Column(Integer, primary_key=True)
+    # Category name
+    name = Column(String, unique=True)
+    # Is category visible to customers
+    active = Column(Boolean, default=True)
+    # Is category has been deleted
+    deleted = Column(Boolean, default=False)
+    # Parent category
+    parent = Column(Integer, ForeignKey("categories.id"))
+
+    products = relationship("Product", backref=backref("category"))
+
+
+class Size(DeferredReflection, TableDeclarativeBase):
+    """Multiple sizes of each product."""
+
+    # Just pkey
+    id = Column(Integer, primary_key=True)
+    # ID of parent product
+    product_id = Column(Integer, ForeignKey("products.id"))
+    # Size name
+    name = Column(VARCHAR(20))
+    # Size cost
+    price = Column(Integer)
+    # Size has been deleted
+    deleted = Column(Boolean, default=False)
+
+    # relationship to parent product
+    parent = relationship("Product", backref=backref("children"))
+
+    __tablename__ = "sizes"
 
 
 class Product(DeferredReflection, TableDeclarativeBase):
@@ -102,6 +128,11 @@ class Product(DeferredReflection, TableDeclarativeBase):
     image = Column(LargeBinary)
     # Product has been deleted
     deleted = Column(Boolean, nullable=False)
+    # Multiple sizes of product
+    # children = relationship("Size", backref=backref("parent"))
+    category_id = Column(Integer, ForeignKey("categories.id"))
+
+    # category = relationship("Category", backref=backref("products"))
 
     # Extra table parameters
     __tablename__ = "products"
@@ -168,31 +199,18 @@ class Transaction(DeferredReflection, TableDeclarativeBase):
     # Extra notes on the transaction
     notes = Column(Text)
 
-    # Payment provider
-    provider = Column(String)
-    # Transaction ID supplied by Telegram
-    telegram_charge_id = Column(String)
-    # Transaction ID supplied by the payment provider
-    provider_charge_id = Column(String)
-    # Extra transaction data, may be required by the payment provider in case of a dispute
-    payment_name = Column(String)
-    payment_phone = Column(String)
-    payment_email = Column(String)
-
     # Order ID
     order_id = Column(Integer, ForeignKey("orders.order_id"))
     order = relationship("Order")
 
     # Extra table parameters
     __tablename__ = "transactions"
-    __table_args__ = (UniqueConstraint("provider", "provider_charge_id"),)
+    # __table_args__ = (UniqueConstraint("provider", "provider_charge_id"),)
 
     def text(self, w: "worker.Worker"):
         string = f"<b>T{self.transaction_id}</b> | {str(self.user)} | {w.Price(self.value)}"
         if self.refunded:
             string += f" | {w.loc.get('emoji_refunded')}"
-        if self.provider:
-            string += f" | {self.provider}"
         if self.notes:
             string += f" | {self.notes}"
         return string
@@ -210,7 +228,6 @@ class Admin(DeferredReflection, TableDeclarativeBase):
     # Permissions
     edit_products = Column(Boolean, default=False)
     receive_orders = Column(Boolean, default=False)
-    create_transactions = Column(Boolean, default=False)
     display_on_help = Column(Boolean, default=False)
     is_owner = Column(Boolean, default=False)
     # Live mode enabled
