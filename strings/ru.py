@@ -146,7 +146,7 @@ conversation_expired = "🕐  За долгое время я не получи�
                        "Чтобы начать снова, пришлите команду /start ."
 
 # User menu: order
-menu_order = "🛒 Заказать"
+menu_order = "🍕 Меню"
 
 menu_cart = "🛒 Корзина"
 
@@ -480,6 +480,14 @@ success_order_refunded = "✴️ Средства по заказу #{order_id} 
 # Success: transaction was created successfully
 success_transaction_created = "✅ Транзакция успешно создана!\n" \
                               "{transaction}"
+
+new_order_text = "<code>*****</code> <b>Новый заказ!</b> <code>*****</code>\n\n" \
+                 "{cart}\n" \
+                 "<code>На сумму:</code> {amount}\n\n" \
+                 "<code>Адрес:</code> {address}\n\n" \
+                 "<code>Имя:</code> {name}\n" \
+                 "<code>Телефон:</code> {phone}\n\n" \
+                 "<code>Комментарий:</code> <i>{comment}</i>"
 
 error_cart_empty = "Ваша корзина пока пуста ☹️"
 

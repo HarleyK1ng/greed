@@ -521,15 +521,21 @@ class Worker(threading.Thread):
         # Loop used to returning to the menu after executing a command
         while True:
             # Create a keyboard with the user main menu
-            keyboard = [[telegram.KeyboardButton(self.loc.get("menu_order"))],
-                        [telegram.KeyboardButton(self.loc.get("menu_order_status"))],
-                        [telegram.KeyboardButton(self.loc.get("menu_language"))],
-                        [telegram.KeyboardButton(self.loc.get("menu_help")),
-                         telegram.KeyboardButton(self.loc.get("menu_bot_info"))]]
+            # TODO: Добавить кнопки: Контакты(О нас, Адреса филиалов),
+            #  Настройки(язык, номер телефона, Имя), Мои заказы(повторить),
+            #  Написать отзыв
+            keyboard = [
+                [telegram.KeyboardButton(self.loc.get("menu_order"))],
+                # [telegram.KeyboardButton(self.loc.get("menu_order_status"))],
+                # [telegram.KeyboardButton(self.loc.get("menu_language"))],
+                # [telegram.KeyboardButton(self.loc.get("menu_help")),
+                #  telegram.KeyboardButton(self.loc.get("menu_bot_info"))]
+            ]
             # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
             self.bot.send_message(self.chat.id,
                                   self.loc.get("conversation_open_user_menu"),
-                                  reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+                                  reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True,
+                                                                            resize_keyboard=True))
             # Wait for a reply from the user
             selection = self.__wait_for_specific_message([
                 self.loc.get("menu_order"),
@@ -720,7 +726,7 @@ class Worker(threading.Thread):
                     amount = cart[product][1] * self.Price(cart[product][0].price)
                 size_name = " " + cart[product][2].name if cart[product][2] is not None else ""
                 cart_list.append(replace_digits_to_emoji(str(cart[product][1])) \
-                                              + "x " + cart[product][0].name + size_name + " = " + str(amount))
+                                 + "x " + cart[product][0].name + size_name + " = " + str(amount))
                 inline_buttons.append([telegram.InlineKeyboardButton(str("✖️ " + cart[product][0].name + " ✖️"),
                                                                      callback_data=str(cart[product][0].id))])
                 if cart[product][2] is not None:
@@ -755,6 +761,7 @@ class Worker(threading.Thread):
             location_markup = telegram.ReplyKeyboardMarkup([[
                 telegram.KeyboardButton(self.loc.get("menu_location"), request_location=True)
             ]], resize_keyboard=True)
+            # TODO: Выводить inline подсказки с предыдущими адресами
             self.bot.send_message(self.chat.id, self.loc.get("ask_for_address"),
                                   reply_markup=location_markup)
             self.bot.edit_message_text(chat_id=self.chat.id,
@@ -783,6 +790,7 @@ class Worker(threading.Thread):
                 telegram.InlineKeyboardButton(self.loc.get("menu_skip"), callback_data="cmd_cancel")
             ]])
             self.bot.send_message(self.chat.id, self.loc.get("ask_order_notes"), reply_markup=skip_markup)
+            # TODO: Выбор формы оплаты
             notes = self.__wait_for_regex(r"(.*)", cancellable=True)
             if isinstance(notes, CancelSignal):
                 notes = ""
@@ -840,6 +848,19 @@ class Worker(threading.Thread):
                 self.session.add(order_item)
         self.bot.send_message(self.chat.id, self.loc.get("success_order_created",
                                                          order=order.order_id))
+        # TODO: ссылка на оплату, если это не наличка
+        new_order_text = self.loc.get("new_order_text",
+                                      cart=cart_str,
+                                      amount=total,
+                                      address=address,
+                                      name=self.user.mention(),
+                                      phone=phone,
+                                      comment=notes)
+        self.bot.send_message(self.cfg["Administration"]["orders_channel"], new_order_text)
+        if location is not None:
+            self.bot.send_location(chat_id=self.cfg["Administration"]["orders_channel"],
+                                   latitude=location.latitude,
+                                   longitude=location.longitude)
         self.session.commit()
 
     def __get_cart_value(self, cart):
@@ -923,18 +944,20 @@ class Worker(threading.Thread):
             if self.admin.edit_products:
                 keyboard.append([self.loc.get("menu_products"),
                                  self.loc.get("menu_categories")])
-            if self.admin.receive_orders:
-                keyboard.append([self.loc.get("menu_orders")])
+            # if self.admin.receive_orders:
+            #     keyboard.append([self.loc.get("menu_orders")])
             if self.admin.is_owner:
                 keyboard.append([self.loc.get("menu_edit_admins")])
             keyboard.append([self.loc.get("menu_user_mode")])
             # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
             self.bot.send_message(self.chat.id, self.loc.get("conversation_open_admin_menu"),
-                                  reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+                                  reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True,
+                                                                            resize_keyboard=True))
             # Wait for a reply from the user
+            # TODO: Настройка форм оплаты: добавление, настройка, включение и выключение, удаление
             selection = self.__wait_for_specific_message([self.loc.get("menu_products"),
                                                           self.loc.get("menu_categories"),
-                                                          self.loc.get("menu_orders"),
+                                                          # self.loc.get("menu_orders"),
                                                           self.loc.get("menu_user_mode"),
                                                           self.loc.get("menu_csv"),
                                                           self.loc.get("menu_edit_admins")])
@@ -946,10 +969,10 @@ class Worker(threading.Thread):
             if selection == self.loc.get("menu_categories"):
                 # Open the categories menu
                 self.__categories_menu()
-            # If the user has selected the Orders option...
-            elif selection == self.loc.get("menu_orders"):
-                # Open the orders menu
-                self.__orders_menu()
+            # # If the user has selected the Orders option...
+            # elif selection == self.loc.get("menu_orders"):
+            #     # Open the orders menu
+            #     self.__orders_menu()
             # If the user has selected the User mode option...
             elif selection == self.loc.get("menu_user_mode"):
                 # Tell the user how to go back to admin menu

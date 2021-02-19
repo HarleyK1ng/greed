@@ -3,27 +3,22 @@
 # Language parameters
 [Language]
 # Available languages:
-# it - Italian, by https://github.com/Steffo99
 # en - English, by https://github.com/DarrenWestwood
-# uk - Ukrainian, by https://github.com/pzhuk
 # ru - Russian, by https://github.com/pzhuk
-# zh_cn - Simplified Chinese, by https://github.com/zhihuiyuze
-# he - Hebrew, by https://github.com/netanelkoli
-# es_mx - Spanish (Mexican), by https://github.com/mastersuv
 # The lanugages that messages can be displayed in
-enabled_languages = ["it", "en", "uk", "ru", "zh_cn", "he", "es_mx"]
+enabled_languages = ["en", "ru",]
 # The default language to be set for users whose language cannot be autodetected or whose language is not enabled
-default_language = "it"
+default_language = "ru"
 # The language to fallback to if a string is missing in a specific language
 # You should set it to either "it" or "en", other languages may be missing some strings as greed is updated
-fallback_language = "en"
+fallback_language = "ru"
 
 
 # Database parameters
 [Database]
 # The database engine you want to use.
 # Refer to http://docs.sqlalchemy.org/en/latest/core/engines.html for the possible settings.
-engine = "sqlite:///database.sqlite"
+engine = "postgresql://user:password@host:port/database"
 
 
 # Telegram bot parameters
@@ -41,16 +36,20 @@ timed_out_pause = 1
 error_pause = 5
 
 
+[Administration]
+orders_channel = ""
+
+
 # General payment settings
 [Payments]
 # ISO currency code
-currency = "EUR"
+currency = "UZS"
 # Currency exp parameter. You can find that on https://core.telegram.org/bots/payments/currencies.json.
 # It has a value of 2 in most currencies (EUR, USD, GBP...)
-currency_exp = 2
+currency_exp = 0
 # Currency symbol which is show to the client users when displaying prices and transaction values
 # If not defined here, default language specific currency symbol from strings would be used
-currency_symbol = "€"
+currency_symbol = "сум"
 
 
 # Credit card payment settings
@@ -60,9 +59,9 @@ currency_symbol = "€"
 # credit_card_token =
 credit_card_token = "123456789:YOUR_TOKEN_HERE_"
 # Minimum wallet payment accepted (in miniumum currency units, $1.00 = 100 units)
-min_amount = 1000
+min_amount = 1000000
 # Maximum wallet payment accepted (in miniumum currency units, $1.00 = 100 units)
-max_amount = 10000
+max_amount = 100000000
 # The preset selections that can be made when adding credit to the wallet with a credit card
 # Presets are pipe-separated |, and should never be outside the bounds provided by the min_amount and max_amount options
 payment_presets = [10.00, 25.00, 50.00, 100.00]
@@ -70,14 +69,14 @@ payment_presets = [10.00, 25.00, 50.00, 100.00]
 # The formula for determining the total cost is:
 # cost = added_funds + added_funds * fee_percentage / 100 + fee_fixed
 # Set these values to 0 to disable the feature.
-fee_percentage = 2.9
-fee_fixed = 30
+fee_percentage = 0
+fee_fixed = 0
 # "Shipping" information
 # Telegram can ask for extra information when charging the user for a credit card transaction
 # Set to yes the data you want to be required
 # This data will be stored in the database
 name_required = true
-email_required = true
+email_required = false
 phone_required = true
 
 

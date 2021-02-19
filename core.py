@@ -122,6 +122,7 @@ def main():
             if update.message is not None:
                 # Ensure the message has been sent in a private chat
                 if update.message.chat.type != "private":
+                    # if update.message.chat.id != "123":
                     log.debug(f"Received a message from a non-private chat: {update.message.chat.id}")
                     # Notify the chat
                     bot.send_message(update.message.chat.id, default_loc.get("error_nonprivate_chat"))
