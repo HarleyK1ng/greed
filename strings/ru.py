@@ -77,11 +77,23 @@ conversation_open_admin_menu = "Вы 💼 <b>Менеджер</b> этого м�
 # Conversation: select a payment method
 conversation_payment_method = "Как бы Вы хотели пополнить ваш кошелек?"
 
+conversation_select_product_size = "Выберите размер блюда:"
+
 # Conversation: select a product to edit
 conversation_admin_select_product = "✏️ Какой продукт необходимо отредактировать?"
 
+conversation_admin_select_category = "✏️ Какую категорию необходимо отредактировать?"
+
+conversation_admin_select_parent_category = "Выберите родительскую категорию из списка\n\n" \
+                                            "Текущее значение:\n" \
+                                            "<code>{current}</code>"
+
+conversation_skip_parent_assignment = "<i>Нажмите Пропустить чтобы не переназначать родительскую категорию</i>"
+
 # Conversation: select a product to delete
 conversation_admin_select_product_to_delete = "❌ Какой продукт необходимо удалить?"
+
+conversation_admin_select_category_to_delete = "❌ Какую категорию необходимо удалить?"
 
 # Conversation: select a user to edit
 conversation_admin_select_user = "Выберите пользователя для редактирования."
@@ -148,17 +160,25 @@ menu_order_status = "🛍 Мои заказы"
 # User menu: add credit
 menu_add_credit = "💵 Пополнить кошелек"
 
+menu_share_phone = "📱 Поделиться номером"
+
 # User menu: bot info
 menu_bot_info = "ℹ️ Информация о боте"
 
 # User menu: cash
 menu_cash = "💵 Наличными"
 
+menu_confirm = "✅ Подтверждаю!"
+
 # User menu: credit card
 menu_credit_card = "💳 Кредитной картой"
 
+menu_no_category = "❌ Без категории"
+
 # Admin menu: products
 menu_products = "📝️ Продукты"
+
+menu_categories = "📂 Категории"
 
 # Admin menu: orders
 menu_orders = "📦 Заказы"
@@ -175,8 +195,12 @@ menu_user_mode = "👤 Режим покупателя"
 # Admin menu: add product
 menu_add_product = "✨ Новый продукт"
 
+menu_add_category = "✨ Новая категория"
+
 # Admin menu: delete product
 menu_delete_product = "❌ Удалить продукт"
+
+menu_delete_category = "❌ Удалить категорию"
 
 # Menu: cancel
 menu_cancel = "🔙 Отмена"
@@ -253,6 +277,10 @@ emoji_no = "🚫"
 # Text: unprocessed order
 text_not_processed = "ожидает"
 
+text_location = "📍 По геолокации"
+
+text_not_defined = "Не назначено"
+
 # Text: completed order
 text_completed = "выполнен"
 
@@ -261,6 +289,8 @@ text_refunded = "возмещен"
 
 # Add product: name?
 ask_product_name = "Как назовем продукт?"
+
+ask_category_name = "Как назовем категорию?"
 
 # Add product: description?
 ask_product_description = "Каким будет описание продукта?"
@@ -271,7 +301,8 @@ ask_product_sizes = "Если у продукта есть разные разм
                     "<code>32 см - 35000\n" \
                     "36 см - 45000\n" \
                     "40 сантиметров - 55000\n" \
-                    "20 - 25000</code>"
+                    "20 - 25000</code>\n\n" \
+                    "Введите <code>X</code> если размеры блюда не требуются"
 
 current_sizes = "Текущие размеры:\n" \
                 "<code>{sizes_str}</code>\n\n" \
@@ -289,14 +320,31 @@ ask_product_image = "🖼 Добавим фото продукта?\n" \
 ask_product_category = "Выберите категорию товара"
 
 # Order product: notes?
-ask_order_notes = "Оставить заметку к этом заказу?\n" \
-                  "💼 Заметка будет доступна Менеджеру магазина.\n" \
+ask_order_notes = "Оставьте комментарий к заказу\n" \
+                  "Желаемое время получения заказа или ориентир к адресу, чтобы курьер добрался до вас скорее\n" \
                   "\n" \
                   "<i>Напишите Ваше сообщение, или выберите Пропустить," \
                   " чтобы не оставлять заметку.</i>"
 
+ask_final_confirmation = "<b>Ваш заказ:</b>\n" \
+                         "{cart_str}\n\n" \
+                         "<b>Адрес:</b>\n" \
+                         "<i>{address}</i>\n\n" \
+                         "<b>Общая сумма:</b>\n" \
+                         "{total_amount}\n\n" \
+                         "<b>Комментарий:</b>\n" \
+                         "<i>{comment}</i>"
+
 ask_for_address = "Отправьте полный адрес или геолокацию.\n\n" \
                   "<i>Если желаете забрать заказ самостоятельно, выберите Самовывоз</i>"
+
+ask_for_phone = "Отправьте свой номер телефона в формате:\n" \
+                "<code>+998 90 123 45 67\n" \
+                "90 123 45 67\n" \
+                "90 123-45-67\n" \
+                "901234567\n" \
+                "+998 (90) 123-45-67</code>\n\n" \
+                "<i>Или нажмите Поделиться номером, если по номеру в вашем аккауте можно дозвониться</i>"
 
 # Refund product: reason?
 ask_refund_reason = " Сообщите причину возврата средств.\n" \
@@ -409,13 +457,19 @@ success_product_added_to_cart = "Добавлено в корзину:\n\n" \
 # Success: product has been added/edited to the database
 success_product_edited = "✅ Продукт успешно создан/обновлен!"
 
+success_added_category = "✅ Категория {name} успешно создана!"
+
+success_edited_category = "✅ Категория {name} успешно обновлена!"
+
 # Success: product has been added/edited to the database
 success_product_deleted = "✅ Продукт успешно удален!"
+
+success_category_deleted = "✅ Категория успешно удалена!"
 
 # Success: order has been created
 success_order_created = "✅ Заказ успешно создан!\n" \
                         "\n" \
-                        "{order}"
+                        "<b>#{order}</b>"
 
 # Success: order was marked as completed
 success_order_completed = "✅ Ваш заказ #{order_id} был успешно выполнен."
@@ -426,6 +480,8 @@ success_order_refunded = "✴️ Средства по заказу #{order_id} 
 # Success: transaction was created successfully
 success_transaction_created = "✅ Транзакция успешно создана!\n" \
                               "{transaction}"
+
+error_cart_empty = "Ваша корзина пока пуста ☹️"
 
 # Error: message received not in a private chat
 error_nonprivate_chat = "⚠️ Этот бот работает только в частных чатах."

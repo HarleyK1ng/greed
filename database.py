@@ -3,7 +3,7 @@ import typing
 
 import requests
 import telegram
-from sqlalchemy import Column, ForeignKey, UniqueConstraint, VARCHAR
+from sqlalchemy import Column, ForeignKey, UniqueConstraint, VARCHAR, Float
 from sqlalchemy import Integer, BigInteger, String, Text, LargeBinary, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base, DeferredReflection
 from sqlalchemy.orm import relationship, backref
@@ -29,6 +29,8 @@ class User(DeferredReflection, TableDeclarativeBase):
     last_name = Column(String)
     username = Column(String)
     language = Column(String, nullable=False)
+
+    addresses = relationship("Address")
 
     # Extra table parameters
     __tablename__ = "users"
@@ -84,12 +86,13 @@ class Category(DeferredReflection, TableDeclarativeBase):
     # Category name
     name = Column(String, unique=True)
     # Is category visible to customers
-    active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True)
     # Is category has been deleted
     deleted = Column(Boolean, default=False)
     # Parent category
-    parent = Column(Integer, ForeignKey("categories.id"))
+    parent_id = Column(Integer, ForeignKey("categories.id"))
 
+    parent = relationship("Category", backref=backref("children", uselist=False), remote_side="Category.id")
     products = relationship("Product", backref=backref("category"))
 
 
@@ -139,18 +142,36 @@ class Product(DeferredReflection, TableDeclarativeBase):
 
     # No __init__ is needed, the default one is sufficient
 
-    def text(self, w: "worker.Worker", *, style: str = "full", cart_qty: int = None):
+    def text(self, w: "worker.Worker", *, style: str = "full", cart_qty: int = None, size_id: int = None,
+             session = None):
         """Return the product details formatted with Telegram HTML. The image is omitted."""
+        if size_id is not None:
+            size = session.query(Size).filter_by(id=size_id, deleted=False).one()
+            size_name = " " + str(size.name)
+            size_price = float(size.price)
+            price = str(w.Price(size_price))
+        else:
+            size_name = ""
+            size_price = ""
+            sizes = session.query(Size).filter_by(deleted=False, product_id=self.id).all()
+            if len(sizes) != 0:
+                price = ""
+            else:
+                price = str(w.Price(self.price))
+            # price = str(w.Price(self.price))
         if style == "short":
-            return f"{cart_qty}x {utils.telegram_html_escape(self.name)} - {str(w.Price(self.price) * cart_qty)}"
+            return f"{cart_qty}x {utils.telegram_html_escape(self.name + size_name)} - " \
+                   f"{price * cart_qty}"
         elif style == "full":
             if cart_qty is not None:
                 cart = w.loc.get("in_cart_format_string", quantity=cart_qty)
             else:
                 cart = ''
-            return w.loc.get("product_format_string", name=utils.telegram_html_escape(self.name),
+            return w.loc.get("product_format_string", name=str(
+                utils.telegram_html_escape(self.name) + size_name
+            ),
                              description=utils.telegram_html_escape(self.description),
-                             price=str(w.Price(self.price)),
+                             price=price,
                              cart=cart)
         else:
             raise ValueError("style is not an accepted value")
@@ -158,18 +179,18 @@ class Product(DeferredReflection, TableDeclarativeBase):
     def __repr__(self):
         return f"<Product {self.name}>"
 
-    def send_as_message(self, w: "worker.Worker", chat_id: int) -> dict:
+    def send_as_message(self, w: "worker.Worker", chat_id: int, session: dict = None) -> dict:
         """Send a message containing the product data."""
         if self.image is None:
             r = requests.get(f"https://api.telegram.org/bot{w.cfg['Telegram']['token']}/sendMessage",
                              params={"chat_id": chat_id,
-                                     "text": self.text(w),
+                                     "text": self.text(w, session=session),
                                      "parse_mode": "HTML"})
         else:
             r = requests.post(f"https://api.telegram.org/bot{w.cfg['Telegram']['token']}/sendPhoto",
                               files={"photo": self.image},
                               params={"chat_id": chat_id,
-                                      "caption": self.text(w),
+                                      "caption": self.text(w, session=session),
                                       "parse_mode": "HTML"})
         return r.json()
 
@@ -240,6 +261,20 @@ class Admin(DeferredReflection, TableDeclarativeBase):
         return f"<Admin {self.user_id}>"
 
 
+class Address(DeferredReflection, TableDeclarativeBase):
+    """Save all addresses to use in future"""
+    __tablename__ = "addresses"
+
+    id = Column(Integer, primary_key=True)
+    text = Column(String)
+    longitude = Column(Float)
+    latitude = Column(Float)
+    deleted = Column(Boolean)
+    user_id = Column(Integer, ForeignKey("users.user_id"))
+
+    user = relationship("User")
+
+
 class Order(DeferredReflection, TableDeclarativeBase):
     """An order which has been placed by an user.
     It may include multiple products, available in the OrderItem table."""
@@ -263,6 +298,10 @@ class Order(DeferredReflection, TableDeclarativeBase):
     notes = Column(Text)
     # Linked transaction
     transaction = relationship("Transaction", uselist=False)
+    address_id = Column(Integer, ForeignKey("addresses.id"))
+    address = relationship("Address")
+    is_pickup = Column(Boolean, default=False)
+    phone = Column(String)
 
     # Extra table parameters
     __tablename__ = "orders"
@@ -314,6 +353,7 @@ class OrderItem(DeferredReflection, TableDeclarativeBase):
     product = relationship("Product")
     # The order in which this item is being purchased
     order_id = Column(Integer, ForeignKey("orders.order_id"), nullable=False)
+    size_id = Column(Integer, ForeignKey("sizes.id"))
 
     # Extra table parameters
     __tablename__ = "orderitems"
