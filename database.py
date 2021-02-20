@@ -66,7 +66,16 @@ class User(DeferredReflection, TableDeclarativeBase):
         if self.username is not None:
             return f"@{self.username}"
         else:
-            return f"[{self.first_name}](tg://user?id={self.user_id})"
+            if self.last_name:
+                if self.username is not None:
+                    return f"{self.first_name} {self.last_name} ( @{self.username} )"
+                else:
+                    return f"{self.first_name} {self.last_name}"
+            else:
+                if self.username is not None:
+                    return f"{self.first_name} ( @{self.username} )"
+                else:
+                    return self.first_name
 
     @property
     def full_name(self):

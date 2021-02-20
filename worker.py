@@ -525,10 +525,6 @@ class Worker(threading.Thread):
             #  Написать отзыв
             keyboard = [
                 [telegram.KeyboardButton(self.loc.get("menu_order"))],
-                # [telegram.KeyboardButton(self.loc.get("menu_order_status"))],
-                # [telegram.KeyboardButton(self.loc.get("menu_language"))],
-                # [telegram.KeyboardButton(self.loc.get("menu_help")),
-                #  telegram.KeyboardButton(self.loc.get("menu_bot_info"))]
             ]
             # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
             self.bot.send_message(self.chat.id,
@@ -557,11 +553,6 @@ class Worker(threading.Thread):
             elif selection == self.loc.get("menu_language"):
                 # Display the language menu
                 self.__language_menu()
-            # If the user has selected the Bot Info option...
-            elif selection == self.loc.get("menu_bot_info"):
-                # Display information about the bot
-                self.__bot_info()
-            # If the user has selected the Help option...
             elif selection == self.loc.get("menu_help"):
                 # Go to the Help menu
                 self.__help_menu()
@@ -621,7 +612,6 @@ class Worker(threading.Thread):
                 self.bot.delete_message(self.chat.id, message.message_id)
                 cart = self.__check_cart(cart=cart)
                 if len(cart) == 0:
-                    # TODO: поблагодарить за заказ
                     break
             elif choice in category_names:
                 self.bot.delete_message(self.chat.id, message.message_id)
@@ -965,10 +955,6 @@ class Worker(threading.Thread):
             if selection == self.loc.get("menu_categories"):
                 # Open the categories menu
                 self.__categories_menu()
-            # # If the user has selected the Orders option...
-            # elif selection == self.loc.get("menu_orders"):
-            #     # Open the orders menu
-            #     self.__orders_menu()
             # If the user has selected the User mode option...
             elif selection == self.loc.get("menu_user_mode"):
                 # Tell the user how to go back to admin menu
@@ -1365,102 +1351,6 @@ class Worker(threading.Thread):
             self.session.commit()
             # Notify the user
             self.bot.send_message(self.chat.id, self.loc.get("success_product_deleted"))
-
-    def __orders_menu(self):
-        """Display a live flow of orders."""
-        log.debug("Displaying __orders_menu")
-        # Create a cancel and a stop keyboard
-        stop_keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_stop"),
-                                                                                      callback_data="cmd_cancel")]])
-        cancel_keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_cancel"),
-                                                                                        callback_data="cmd_cancel")]])
-        # Send a small intro message on the Live Orders mode
-        # Remove the keyboard with the first message... (#39)
-        self.bot.send_message(self.chat.id,
-                              self.loc.get("conversation_live_orders_start"),
-                              reply_markup=telegram.ReplyKeyboardRemove())
-        # ...and display a small inline keyboard with the following one
-        self.bot.send_message(self.chat.id,
-                              self.loc.get("conversation_live_orders_stop"),
-                              reply_markup=stop_keyboard)
-        # Create the order keyboard
-        order_keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_complete"),
-                                                                                       callback_data="order_complete")],
-                                                        [telegram.InlineKeyboardButton(self.loc.get("menu_refund"),
-                                                                                       callback_data="order_refund")]])
-        # Display the past pending orders
-        orders = self.session.query(db.Order) \
-            .filter_by(delivery_date=None, refund_date=None) \
-            .join(db.Transaction) \
-            .join(db.User) \
-            .all()
-        # Create a message for every one of them
-        for order in orders:
-            # Send the created message
-            self.bot.send_message(self.chat.id, order.text(w=self, session=self.session),
-                                  reply_markup=order_keyboard)
-        # Set the Live mode flag to True
-        self.admin.live_mode = True
-        # Commit the change to the database
-        self.session.commit()
-        while True:
-            # Wait for any message to stop the listening mode
-            update = self.__wait_for_inlinekeyboard_callback(cancellable=True)
-            # If the user pressed the stop button, exit listening mode
-            if isinstance(update, CancelSignal):
-                # Stop the listening mode
-                self.admin.live_mode = False
-                break
-            # Find the order
-            order_id = re.search(self.loc.get("order_number").replace("{id}", "([0-9]+)"), update.message.text).group(1)
-            order = self.session.query(db.Order).filter(db.Order.order_id == order_id).one()
-            # Check if the order hasn't been already cleared
-            if order.delivery_date is not None or order.refund_date is not None:
-                # Notify the admin and skip that order
-                self.bot.edit_message_text(self.chat.id, self.loc.get("error_order_already_cleared"))
-                break
-            # If the user pressed the complete order button, complete the order
-            if update.data == "order_complete":
-                # Mark the order as complete
-                order.delivery_date = datetime.datetime.now()
-                # Commit the transaction
-                self.session.commit()
-                # Update order message
-                self.bot.edit_message_text(order.text(w=self, session=self.session), chat_id=self.chat.id,
-                                           message_id=update.message.message_id)
-                # Notify the user of the completition
-                self.bot.send_message(order.user_id,
-                                      self.loc.get("notification_order_completed",
-                                                   order=order.text(w=self, session=self.session, user=True)))
-            # If the user pressed the refund order button, refund the order...
-            elif update.data == "order_refund":
-                # Ask for a refund reason
-                reason_msg = self.bot.send_message(self.chat.id, self.loc.get("ask_refund_reason"),
-                                                   reply_markup=cancel_keyboard)
-                # Wait for a reply
-                reply = self.__wait_for_regex("(.*)", cancellable=True)
-                # If the user pressed the cancel button, cancel the refund
-                if isinstance(reply, CancelSignal):
-                    # Delete the message asking for the refund reason
-                    self.bot.delete_message(self.chat.id, reason_msg.message_id)
-                    continue
-                # Mark the order as refunded
-                order.refund_date = datetime.datetime.now()
-                # Save the refund reason
-                order.refund_reason = reply
-                # Refund the credit, reverting the old transaction
-                order.transaction.refunded = True
-                # Update the order message
-                self.bot.edit_message_text(order.text(w=self, session=self.session),
-                                           chat_id=self.chat.id,
-                                           message_id=update.message.message_id)
-                # Notify the user of the refund
-                self.bot.send_message(order.user_id,
-                                      self.loc.get("notification_order_refunded", order=order.text(w=self,
-                                                                                                   session=self.session,
-                                                                                                   user=True)))
-                # Notify the admin of the refund
-                self.bot.send_message(self.chat.id, self.loc.get("success_order_refunded", order_id=order.order_id))
 
     def __help_menu(self):
         """Help menu. Allows the user to ask for assistance, get a guide or see some info about the bot."""
