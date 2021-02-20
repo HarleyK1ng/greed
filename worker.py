@@ -188,7 +188,6 @@ class Worker(threading.Thread):
                 # Become owner
                 self.admin = db.Admin(user_id=self.user.user_id,
                                       edit_products=True,
-                                      receive_orders=True,
                                       display_on_help=True,
                                       is_owner=True,
                                       live_mode=False)
@@ -424,7 +423,7 @@ class Worker(threading.Thread):
 
     def __wait_for_contact(self, cancellable: bool = False):
         # TODO: Добавить в конфиг настройку регионального формата номеров, чтобы был правильный regex
-        regex = r"(([+\(]{0,1}\d{0,3} {0,1}\({0,1}\d{2}\){0,1} {0,1}\d{3}[ -]{0,1} {0,1}\d{2} {0,1}\d{2}))"
+        regex = r"(([+\(]{0,1}\d{0,3}[ -]{0,1}\({0,1}\d{2}\){0,1}[ -]{0,1}\d{3}[ -]{0,1}[ -]{0,1}\d{2}[ -]{0,1}\d{2}))"
         while True:
             # Get the next update
             update = self.__receive_next_update()
@@ -944,8 +943,6 @@ class Worker(threading.Thread):
             if self.admin.edit_products:
                 keyboard.append([self.loc.get("menu_products"),
                                  self.loc.get("menu_categories")])
-            # if self.admin.receive_orders:
-            #     keyboard.append([self.loc.get("menu_orders")])
             if self.admin.is_owner:
                 keyboard.append([self.loc.get("menu_edit_admins")])
             keyboard.append([self.loc.get("menu_user_mode")])
@@ -959,7 +956,6 @@ class Worker(threading.Thread):
                                                           self.loc.get("menu_categories"),
                                                           # self.loc.get("menu_orders"),
                                                           self.loc.get("menu_user_mode"),
-                                                          self.loc.get("menu_csv"),
                                                           self.loc.get("menu_edit_admins")])
             # If the user has selected the Products option...
             if selection == self.loc.get("menu_products"):
@@ -983,10 +979,6 @@ class Worker(threading.Thread):
             elif selection == self.loc.get("menu_edit_admins"):
                 # Open the edit admin menu
                 self.__add_admin()
-            # If the user has selected the .csv option...
-            elif selection == self.loc.get("menu_csv"):
-                # Generate the .csv file
-                self.__transactions_file()
 
     def __categories_menu(self):
         """Display the admin menu to select a category to edit."""
@@ -1513,7 +1505,7 @@ class Worker(threading.Thread):
         if admin is None:
             # Create the keyboard to be sent
             keyboard = telegram.ReplyKeyboardMarkup([[self.loc.get("emoji_yes"), self.loc.get("emoji_no")]],
-                                                    one_time_keyboard=True)
+                                                    one_time_keyboard=True, resize_keyboard=True)
             # Ask for confirmation
             self.bot.send_message(self.chat.id, self.loc.get("conversation_confirm_admin_promotion"),
                                   reply_markup=keyboard)
@@ -1525,8 +1517,6 @@ class Worker(threading.Thread):
             # Create a new admin
             admin = db.Admin(user=user,
                              edit_products=False,
-                             receive_orders=False,
-                             create_transactions=False,
                              is_owner=False,
                              display_on_help=False)
             self.session.add(admin)
@@ -1539,14 +1529,6 @@ class Worker(threading.Thread):
                 [telegram.InlineKeyboardButton(
                     f"{self.loc.boolmoji(admin.edit_products)} {self.loc.get('prop_edit_products')}",
                     callback_data="toggle_edit_products"
-                )],
-                [telegram.InlineKeyboardButton(
-                    f"{self.loc.boolmoji(admin.receive_orders)} {self.loc.get('prop_receive_orders')}",
-                    callback_data="toggle_receive_orders"
-                )],
-                [telegram.InlineKeyboardButton(
-                    f"{self.loc.boolmoji(admin.create_transactions)} {self.loc.get('prop_create_transactions')}",
-                    callback_data="toggle_create_transactions"
                 )],
                 [telegram.InlineKeyboardButton(
                     f"{self.loc.boolmoji(admin.display_on_help)} {self.loc.get('prop_display_on_help')}",
@@ -1566,10 +1548,6 @@ class Worker(threading.Thread):
             # Toggle the correct property
             if callback.data == "toggle_edit_products":
                 admin.edit_products = not admin.edit_products
-            elif callback.data == "toggle_receive_orders":
-                admin.receive_orders = not admin.receive_orders
-            elif callback.data == "toggle_create_transactions":
-                admin.create_transactions = not admin.create_transactions
             elif callback.data == "toggle_display_on_help":
                 admin.display_on_help = not admin.display_on_help
             elif callback.data == "cmd_done":

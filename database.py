@@ -248,7 +248,6 @@ class Admin(DeferredReflection, TableDeclarativeBase):
     user = relationship("User")
     # Permissions
     edit_products = Column(Boolean, default=False)
-    receive_orders = Column(Boolean, default=False)
     display_on_help = Column(Boolean, default=False)
     is_owner = Column(Boolean, default=False)
     # Live mode enabled
