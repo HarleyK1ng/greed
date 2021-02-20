@@ -37,7 +37,7 @@ error_pause = 5
 
 
 [Administration]
-orders_channel = ""
+orders_channel = "-channel_id where bot sends new orders"
 
 
 # General payment settings
