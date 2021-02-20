@@ -495,7 +495,8 @@ class Worker(threading.Thread):
         for user in users:
             keyboard_buttons.append([user.identifiable_str()])
         # Create the keyboard
-        keyboard = telegram.ReplyKeyboardMarkup(keyboard_buttons, one_time_keyboard=True)
+        keyboard = telegram.ReplyKeyboardMarkup(keyboard_buttons, one_time_keyboard=True,
+                                                resize_keyboard=True)
         # Keep asking until a result is returned
         while True:
             # Send the keyboard
@@ -981,7 +982,8 @@ class Worker(threading.Thread):
         keyboard = [[telegram.KeyboardButton(category_name)] for category_name in category_names]
         # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
         self.bot.send_message(self.chat.id, self.loc.get("conversation_admin_select_category"),
-                              reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+                              reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True,
+                                                                        resize_keyboard=True))
         # Wait for a reply from the user
         selection = self.__wait_for_specific_message(category_names, cancellable=True)
         # If the user has selected the Cancel option...
@@ -1137,7 +1139,8 @@ class Worker(threading.Thread):
         keyboard = [[telegram.KeyboardButton(product_name)] for product_name in product_names]
         # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
         self.bot.send_message(self.chat.id, self.loc.get("conversation_admin_select_product"),
-                              reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+                              reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True,
+                                                                        resize_keyboard=True))
         # Wait for a reply from the user
         selection = self.__wait_for_specific_message(product_names, cancellable=True)
         # If the user has selected the Cancel option...
