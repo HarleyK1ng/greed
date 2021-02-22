@@ -620,7 +620,7 @@ class Worker(threading.Thread):
             elif choice in category_names:
                 self.bot.delete_message(self.chat.id, message.message_id)
                 category = self.session.query(db.Category).filter_by(is_active=True, deleted=False,
-                                                                     name=choice[2:]).one()
+                                                                     name=choice).one()
                 level.append(category.id)
             elif choice in product_names:
                 self.bot.delete_message(self.chat.id, message.message_id)
