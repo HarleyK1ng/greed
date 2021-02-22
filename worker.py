@@ -530,7 +530,7 @@ class Worker(threading.Thread):
             # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
             self.bot.send_message(self.chat.id,
                                   self.loc.get("conversation_open_user_menu"),
-                                  reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True,
+                                  reply_markup=telegram.ReplyKeyboardMarkup(keyboard,
                                                                             resize_keyboard=True))
             # Wait for a reply from the user
             selection = self.__wait_for_specific_message([
@@ -565,10 +565,7 @@ class Worker(threading.Thread):
             categories = self.session.query(db.Category).filter_by(is_active=True, deleted=False,
                                                                    parent_id=level[-1]).all()
             products = self.session.query(db.Product).filter_by(deleted=False, category_id=level[-1]).all()
-            buttons = [[telegram.KeyboardButton(self.loc.get("menu_home"))],
-                       [telegram.KeyboardButton(self.loc.get("menu_cart"))]]
-            if level[-1] is not None:
-                buttons[0].append(telegram.KeyboardButton(self.loc.get("menu_back")))
+            buttons = []
             category_names = []
             product_names = []
             row = []
@@ -594,6 +591,10 @@ class Worker(threading.Thread):
             else:
                 if len(row) != 0:
                     buttons.append(row)
+            buttons.append([[telegram.KeyboardButton(self.loc.get("menu_cart"))],
+                            [telegram.KeyboardButton(self.loc.get("menu_home"))]])
+            if level[-1] is not None:
+                buttons[-1].append(telegram.KeyboardButton(self.loc.get("menu_back")))
             message = self.bot.send_message(self.chat.id, self.loc.get("conversation_choose_item"),
                                             reply_markup=telegram.ReplyKeyboardMarkup(
                                                 buttons, one_time_keyboard=False,
