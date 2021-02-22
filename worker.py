@@ -565,7 +565,7 @@ class Worker(threading.Thread):
             categories = self.session.query(db.Category).filter_by(is_active=True, deleted=False,
                                                                    parent_id=level[-1]).all()
             products = self.session.query(db.Product).filter_by(deleted=False, category_id=level[-1]).all()
-            buttons = []
+            buttons = [[]]
             category_names = []
             product_names = []
             row = []
