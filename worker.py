@@ -596,7 +596,7 @@ class Worker(threading.Thread):
                     buttons.append(row)
             message = self.bot.send_message(self.chat.id, self.loc.get("conversation_choose_item"),
                                             reply_markup=telegram.ReplyKeyboardMarkup(
-                                                buttons,
+                                                buttons, one_time_keyboard=False,
                                                 resize_keyboard=True))
             choice = self.__wait_for_specific_message(category_names + product_names \
                                                       + [self.loc.get("menu_back"),
