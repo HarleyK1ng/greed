@@ -573,8 +573,8 @@ class Worker(threading.Thread):
             product_names = []
             row = []
             for category in categories:
-                category_names.append("🗂 " + category.name)
-                row.append(telegram.KeyboardButton("🗂 " + category.name))
+                category_names.append(str(category.name))
+                row.append(telegram.KeyboardButton(str(category.name)))
                 if len(row) == 2:
                     buttons.append(row)
                     row = []
