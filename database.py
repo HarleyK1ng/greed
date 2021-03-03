@@ -282,39 +282,6 @@ class Order(DeferredReflection, TableDeclarativeBase):
     def __repr__(self):
         return f"<Order {self.order_id} placed by User {self.user_id}>"
 
-    # def text(self, w: "worker.Worker", session, user=False):
-    #     joined_self = session.query(Order).filter_by(order_id=self.order_id).one()
-    #     items = ""
-    #     for item in self.items:
-    #         items += item.text(w) + "\n"
-    #     if self.delivery_date is not None:
-    #         status_emoji = w.loc.get("emoji_completed")
-    #         status_text = w.loc.get("text_completed")
-    #     elif self.refund_date is not None:
-    #         status_emoji = w.loc.get("emoji_refunded")
-    #         status_text = w.loc.get("text_refunded")
-    #     else:
-    #         status_emoji = w.loc.get("emoji_not_processed")
-    #         status_text = w.loc.get("text_not_processed")
-    #     if user and w.cfg["Appearance"]["full_order_info"] == "no":
-    #         return w.loc.get("user_order_format_string",
-    #                          status_emoji=status_emoji,
-    #                          status_text=status_text,
-    #                          items=items,
-    #                          notes=self.notes,
-    #                          value=str(w.Price(-joined_self.transaction.value))) + \
-    #                (w.loc.get("refund_reason", reason=self.refund_reason) if self.refund_date is not None else "")
-    #     else:
-    #         return status_emoji + " " + \
-    #                w.loc.get("order_number", id=self.order_id) + "\n" + \
-    #                w.loc.get("order_format_string",
-    #                          user=self.user.mention(),
-    #                          date=self.creation_date.isoformat(),
-    #                          items=items,
-    #                          notes=self.notes if self.notes is not None else "",
-    #                          value=str(w.Price(-joined_self.transaction.value))) + \
-    #                (w.loc.get("refund_reason", reason=self.refund_reason) if self.refund_date is not None else "")
-
 
 class OrderItem(DeferredReflection, TableDeclarativeBase):
     """A product that has been purchased as part of an order."""
