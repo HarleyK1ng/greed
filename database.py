@@ -245,7 +245,7 @@ class Address(DeferredReflection, TableDeclarativeBase):
     deleted = Column(Boolean)
     user_id = Column(Integer, ForeignKey("users.user_id"))
 
-    user = relationship("User")
+    user = relationship("User", backref=backref("addresses"))
 
 
 class Order(DeferredReflection, TableDeclarativeBase):
