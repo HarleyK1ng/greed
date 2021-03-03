@@ -1,6 +1,5 @@
 python-telegram-bot
 sqlalchemy
 requests
-toml
 psycopg2-binary
 coloredlogs

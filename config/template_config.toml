@@ -38,6 +38,7 @@ error_pause = 5
 
 [Administration]
 orders_channel = "-channel_id where bot sends new orders"
+rates_channel = "-channel_id where bot sends rates"
 
 
 # General payment settings
@@ -64,7 +65,7 @@ min_amount = 1000000
 max_amount = 100000000
 # The preset selections that can be made when adding credit to the wallet with a credit card
 # Presets are pipe-separated |, and should never be outside the bounds provided by the min_amount and max_amount options
-payment_presets = [10.00, 25.00, 50.00, 100.00]
+payment_presets = [10000, 25000, 50000, 100000]
 # Make the user pay a extra fee when adding credit to the wallet with a credit card
 # The formula for determining the total cost is:
 # cost = added_funds + added_funds * fee_percentage / 100 + fee_fixed

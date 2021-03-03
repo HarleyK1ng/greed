@@ -526,6 +526,7 @@ class Worker(threading.Thread):
             #  Написать отзыв
             keyboard = [
                 [telegram.KeyboardButton(self.loc.get("menu_order"))],
+                [telegram.KeyboardButton(self.loc.get("menu_rate"))]
             ]
             # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
             self.bot.send_message(self.chat.id,
@@ -535,10 +536,7 @@ class Worker(threading.Thread):
             # Wait for a reply from the user
             selection = self.__wait_for_specific_message([
                 self.loc.get("menu_order"),
-                self.loc.get("menu_order_status"),
-                self.loc.get("menu_language"),
-                self.loc.get("menu_help"),
-                self.loc.get("menu_bot_info"),
+                self.loc.get("menu_rate"),
             ])
             # After the user reply, update the user data
             self.update_user()
@@ -546,17 +544,37 @@ class Worker(threading.Thread):
             if selection == self.loc.get("menu_order"):
                 # Open the order menu
                 self.__order_menu()
-            # If the user has selected the Order Status option...
-            elif selection == self.loc.get("menu_order_status"):
-                # Display the order(s) status
-                self.__order_status()
-            # If the user has selected the Language option...
-            elif selection == self.loc.get("menu_language"):
-                # Display the language menu
-                self.__language_menu()
-            elif selection == self.loc.get("menu_help"):
-                # Go to the Help menu
-                self.__help_menu()
+            if selection == self.loc.get("menu_rate"):
+                # Open the order menu
+                self.__rate_menu()
+
+    def __rate_menu(self):
+        rate_kb = [[telegram.KeyboardButton(self.loc.get("menu_rate_5"))],
+                   [telegram.KeyboardButton(self.loc.get("menu_rate_4"))],
+                   [telegram.KeyboardButton(self.loc.get("menu_rate_3"))],
+                   [telegram.KeyboardButton(self.loc.get("menu_rate_2"))],
+                   [telegram.KeyboardButton(self.loc.get("menu_rate_1"))]]
+        self.bot.send_message(self.chat.id, self.loc.get("conversation_rate"),
+                              reply_markup=telegram.ReplyKeyboardMarkup(rate_kb, resize_keyboard=True))
+        rate = self.__wait_for_specific_message([self.loc.get("menu_rate_5"),
+                                                 self.loc.get("menu_rate_4"),
+                                                 self.loc.get("menu_rate_3"),
+                                                 self.loc.get("menu_rate_2"),
+                                                 self.loc.get("menu_rate_1")],
+                                                cancellable=False)
+        self.bot.send_message(self.chat.id, self.loc.get("conversation_rate_notes"),
+                              reply_markup=telegram.ReplyKeyboardMarkup(
+                                  [[telegram.KeyboardButton(self.loc.get("menu_skip"))]],
+                                  resize_keyboard=True
+                              ))
+        notes = self.__wait_for_regex(r"(.*)")
+        if notes == self.loc.get("menu_skip"):
+            notes = ""
+        new_rate = self.loc.get("new_rate_text",
+                                user=self.user.mention(),
+                                rate=rate,
+                                comment=notes)
+        self.bot.send_message(self.cfg["Administration"]["rates_channel"], new_rate)
 
     def __order_menu(self):
         level = [None]

@@ -29,7 +29,9 @@ class User(DeferredReflection, TableDeclarativeBase):
     last_name = Column(String)
     username = Column(String)
     language = Column(String, nullable=False)
+    phone_number = Column(Integer, default=None)
 
+    # orders = relationship("Order")
     addresses = relationship("Address")
 
     # Extra table parameters
@@ -212,43 +214,6 @@ class Product(DeferredReflection, TableDeclarativeBase):
         self.image = r.content
 
 
-class Transaction(DeferredReflection, TableDeclarativeBase):
-    """A greed wallet transaction.
-    Wallet credit ISN'T calculated from these, but they can be used to recalculate it."""
-    # TODO: split this into multiple tables
-
-    # The internal transaction ID
-    transaction_id = Column(Integer, primary_key=True)
-    # The user whose credit is affected by this transaction
-    user_id = Column(BigInteger, ForeignKey("users.user_id"), nullable=False)
-    user = relationship("User", backref=backref("transactions"))
-    # The value of this transaction. Can be both negative and positive.
-    value = Column(Integer, nullable=False)
-    # Refunded status: if True, ignore the value of this transaction when recalculating
-    refunded = Column(Boolean, default=False)
-    # Extra notes on the transaction
-    notes = Column(Text)
-
-    # Order ID
-    order_id = Column(Integer, ForeignKey("orders.order_id"))
-    order = relationship("Order")
-
-    # Extra table parameters
-    __tablename__ = "transactions"
-    # __table_args__ = (UniqueConstraint("provider", "provider_charge_id"),)
-
-    def text(self, w: "worker.Worker"):
-        string = f"<b>T{self.transaction_id}</b> | {str(self.user)} | {w.Price(self.value)}"
-        if self.refunded:
-            string += f" | {w.loc.get('emoji_refunded')}"
-        if self.notes:
-            string += f" | {self.notes}"
-        return string
-
-    def __repr__(self):
-        return f"<Transaction {self.transaction_id} for User {self.user_id}>"
-
-
 class Admin(DeferredReflection, TableDeclarativeBase):
     """A greed administrator with his permissions."""
 
@@ -291,7 +256,7 @@ class Order(DeferredReflection, TableDeclarativeBase):
     order_id = Column(Integer, primary_key=True)
     # The user who placed the order
     user_id = Column(BigInteger, ForeignKey("users.user_id"))
-    user = relationship("User")
+    user = relationship("User", backref=backref("orders"))
     # Date of creation
     creation_date = Column(DateTime, nullable=False)
     # Date of delivery
