@@ -31,7 +31,7 @@ class User(DeferredReflection, TableDeclarativeBase):
     language = Column(String, nullable=False)
     phone_number = Column(Integer, default=None)
 
-    # orders = relationship("Order")
+    orders = relationship("Order")
     addresses = relationship("Address")
 
     # Extra table parameters
